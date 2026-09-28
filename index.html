@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="am">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ethio-Saudi Official COC & Arabic Training Portal</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Barcode Library -->
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <!-- QR Code Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- html2pdf for Flawless PDF Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Ethiopic:wght@400;600;700&family=Cinzel:wght@600;700&family=Amiri:wght@400;700&display=swap');
+        
+        body {
+            font-family: 'Noto Sans Ethiopic', sans-serif;
+            user-select: none;
+        }
+
+        .cert-font-heading {
+            font-family: 'Cinzel', serif;
+        }
+
+        .arabic-font {
+            font-family: 'Amiri', serif;
+        }
+
+        /* Strict Standard A4 Landscape Aspect Ratio & Size */
+        .cert-container-a4 {
+            width: 297mm;
+            height: 210mm;
+            max-width: 100%;
+            margin: 0 auto;
+            box-sizing: border-box;
+            background: #ffffff;
+            position: relative;
+        }
+
+        .cert-border {
+            border: 10px solid #1e3a8a;
+            outline: 5px solid #d97706;
+            outline-offset: -8px;
+        }
+
+        .watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-25deg);
+            font-size: 3.8rem;
+            color: rgba(217, 119, 6, 0.04);
+            font-weight: bold;
+            pointer-events: none;
+            white-space: nowrap;
+            z-index: 0;
+        }
+
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #printable-area, #printable-area * {
+                visibility: visible;
+            }
+            #printable-area {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+    <!-- Header / Navigation -->
+    <header class="bg-blue-900 text-white shadow-lg sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <i class="fa-solid fa-award text-amber-400 text-3xl"></i>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight">ኢትዮ-ሳዑዲ የCOC እና የቋንቋ ማዕከል</h1>
+                    <p class="text-xs text-blue-200">Ethio-Saudi Occupational & Language Assessment College</p>
+                </div>
+            </div>
+            <nav class="hidden md:flex space-x-6 text-sm font-semibold">
+                <button onclick="switchTab('exam')" class="hover:text-amber-400 transition flex items-center gap-2"><i class="fa-solid fa-pen-to-square"></i> የCOC ፈተና</button>
+                <button onclick="switchTab('arabic')" class="hover:text-amber-400 transition flex items-center gap-2"><i class="fa-solid fa-language"></i> የዓረብኛ ትምህርት</button>
+                <button onclick="switchTab('guide')" class="hover:text-amber-400 transition flex items-center gap-2"><i class="fa-solid fa-book-open"></i> የሳዑዲ መመሪያ</button>
+                <button onclick="openAdminModal()" class="bg-amber-500 hover:bg-amber-600 px-3 py-1.5 rounded-md text-blue-950 font-bold transition flex items-center gap-1.5"><i class="fa-solid fa-lock"></i> አድሚን</button>
+            </nav>
+            <button onclick="openAdminModal()" class="md:hidden text-amber-400 font-bold text-sm bg-blue-800 px-3 py-1 rounded">አድሚን</button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-5xl mx-auto px-4 py-8 flex-grow w-full">
+
+        <!-- TAB 1: EXAM SECTION -->
+        <section id="tab-exam" class="block">
+            <!-- Student Registration Form -->
+            <div id="registration-card" class="bg-white rounded-xl shadow-md p-6 max-w-lg mx-auto border border-slate-200">
+                <div class="text-center mb-6">
+                    <i class="fa-solid fa-user-graduate text-blue-900 text-4xl mb-2"></i>
+                    <h2 class="text-2xl font-bold text-slate-800">የተፈታኝ ምዝገባ (Candidate Login)</h2>
+                    <p class="text-sm text-slate-500">ፈተናውን ለመጀመር እባክዎን ትክክለኛ መረጃዎን ያስገቡ</p>
+                </div>
+                <form id="student-form" onsubmit="startExam(event)">
+                    <div class="mb-4">
+                        <label class="block text-sm font-semibold mb-1 text-slate-700">ሙሉ ስም (የአባትና የአያት ስም ጨምሮ)</label>
+                        <input type="text" id="student-name" required placeholder="ምሳሌ፡ አበበ ከበደ ተሰማ" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-600">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-semibold mb-1 text-slate-700">ስልክ ቁጥር</label>
+                        <input type="tel" id="student-phone" required placeholder="0911223344" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-600">
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-semibold mb-1 text-slate-700">የሙያ ዘርፍ (Job Sector)</label>
+                        <select id="student-sector" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-600">
+                            <option value="Housekeeping & Caregiving">የቤት አያያዝ እና እንክብካቤ (Housekeeping & Caregiving)</option>
+                            <option value="Driver">የቤት ሹፌር (House Driver)</option>
+                            <option value="Technician">የቴክኒክና ጥገና ስራ (Technician)</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="w-full bg-blue-900 hover:bg-blue-800 text-white font-bold py-3 rounded-lg shadow-md transition text-lg flex justify-center items-center gap-2">
+                        <i class="fa-solid fa-play"></i> ፈተናውን ጀምር (30 ደቂቃ)
+                    </button>
+                </form>
+            </div>
+
+            <!-- Active Exam Panel -->
+            <div id="exam-panel" class="hidden bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
+                <div class="bg-slate-800 text-white px-6 py-4 flex justify-between items-center">
+                    <div>
+                        <h3 id="exam-user-display" class="font-bold text-lg">ተፈታኝ፡ -</h3>
+                        <p class="text-xs text-slate-300">የCOC የብቃት ማረጋገጫ ፈተና (40 ጥያቄዎች)</p>
+                    </div>
+                    <div class="bg-red-600 px-4 py-2 rounded-lg font-mono text-xl font-bold flex items-center gap-2 shadow">
+                        <i class="fa-regular fa-clock"></i> <span id="timer-display">30:00</span>
+                    </div>
+                </div>
+
+                <div class="bg-slate-100 px-6 py-2 border-b flex justify-between items-center text-xs font-semibold text-slate-600">
+                    <span id="question-tracker">ጥያቄ 1 ከ 40</span>
+                    <div class="w-1/2 bg-slate-200 h-2 rounded-full overflow-hidden">
+                        <div id="progress-bar-fill" class="bg-blue-600 h-full w-0 transition-all duration-300"></div>
+                    </div>
+                </div>
+
+                <div class="p-6">
+                    <div id="question-container" class="min-h-[220px]">
+                        <h4 id="question-text" class="text-lg font-bold text-slate-800 mb-4">ጥያቄ እዚህ ጋር ይመጣል...</h4>
+                        <div id="options-container" class="space-y-3"></div>
+                    </div>
+
+                    <div class="flex justify-between items-center mt-8 pt-4 border-t border-slate-100">
+                        <button id="prev-btn" onclick="navigateQuestion(-1)" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-5 py-2.5 rounded-lg font-semibold transition flex items-center gap-2 disabled:opacity-50">
+                            <i class="fa-solid fa-arrow-left"></i> የፊተኛው
+                        </button>
+                        <button id="next-btn" onclick="navigateQuestion(1)" class="bg-blue-900 hover:bg-blue-800 text-white px-6 py-2.5 rounded-lg font-semibold transition flex items-center gap-2">
+                            ቀጣይ <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                        <button id="submit-btn" onclick="submitExamPrompt()" class="hidden bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-lg font-bold transition flex items-center gap-2">
+                            <i class="fa-solid fa-check-double"></i> ፈተናውን ጨርስ
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Completion Message Panel -->
+            <div id="completion-card" class="hidden bg-white rounded-xl shadow-lg p-8 max-w-lg mx-auto text-center border border-slate-200">
+                <div class="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 text-4xl">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-slate-800 mb-2">ፈተናውን አጠናቀዋል!</h3>
+                <p class="text-slate-600 mb-6">ውጤትዎ በደህነነት ወደ ኮሌጁ አድሚን ሲስተም ተልኳል። ኦሪጅናል ሰርተፊኬትዎን ከኮሌጁ አስተዳዳሪ ወስደው ማስተም ይችላሉ።</p>
+                <div class="bg-slate-50 p-4 rounded-lg border mb-6 text-left text-sm space-y-1">
+                    <p><strong>ተፈታኝ፡</strong> <span id="comp-name"></span></p>
+                    <p><strong>ያገኙት ውጤት፡</strong> <span id="comp-score" class="font-bold text-blue-900"></span></p>
+                    <p><strong>ሁኔታ፡</strong> <span id="comp-status" class="font-bold"></span></p>
+                </div>
+                <button onclick="resetExamToHome()" class="bg-blue-900 text-white px-6 py-2.5 rounded-lg font-bold hover:bg-blue-800 transition">ወደ መነሻ ገጽ ተመለስ</button>
+            </div>
+        </section>
+
+        <!-- TAB 2: ARABIC TRAINING -->
+        <section id="tab-arabic" class="hidden">
+            <div class="bg-white rounded-xl shadow-md p-6 border border-slate-200">
+                <h2 class="text-2xl font-bold text-blue-900 mb-4 flex items-center gap-2"><i class="fa-solid fa-language"></i> የመሰረታዊ ዓረብኛ ቋንቋ ልምምድ (Vocab & Pronunciation)</h2>
+                <p class="text-slate-600 text-sm mb-6">ቃላቱን እና አረፍተ ነገሮቹን ድምፅ በመንካት አነባበባቸውን ያዳምጡ።</p>
+
+                <div class="grid md:grid-cols-2 gap-4" id="vocab-cards-container"></div>
+            </div>
+        </section>
+
+        <!-- TAB 3: EXTENSIVE SAUDI WORK GUIDE -->
+        <section id="tab-guide" class="hidden">
+            <div class="bg-white rounded-xl shadow-md p-6 border border-slate-200 space-y-8">
+                <div class="text-center border-b pb-4">
+                    <h2 class="text-3xl font-bold text-blue-900 flex justify-center items-center gap-2"><i class="fa-solid fa-passport"></i> በሳዑዲ ዓረብያ የሥራ፣ የህግ እና የባህል ሙሉ መመሪያ</h2>
+                    <p class="text-slate-500 text-sm mt-1">ወደ ሳዑዲ ዓረብያ ከሄዱ በኋላ ማወቅ የሚገቧችሁ ህጎች፣ የደህንነት መመሪያዎች እና ጠቃሚ መረጃዎች</p>
+                </div>
+
+                <!-- Section 1: Employment Laws & Iqama -->
+                <div class="bg-blue-50 border-l-4 border-blue-900 p-5 rounded-r-lg">
+                    <h3 class="font-bold text-blue-950 text-xl mb-3 flex items-center gap-2"><i class="fa-solid fa-scale-balanced"></i> 1. የህግና የቪዛ መመሪያዎች (Labor & Iqama Laws)</h3>
+                    <ul class="list-disc list-inside text-slate-700 text-sm space-y-2 leading-relaxed">
+                        <li><strong>የኢቃማ (Iqama) መታወቂያ፡</strong> ሳዑዲ እንደገቡ በአንድ ወር ጊዜ ውስጥ አሰሪዎ የነዋሪነት መታወቂያ (Iqama) ሊያወጣልዎት ይገባል። መታወቂያውን ሁልጊዜ በጥንቃቄ መያዝ አለብዎት።</li>
+                        <li><strong>የስራ ውል (Contract):</strong> ከተፈረመው የስራ ውል ውጪ በሌላ ቤት ወይም በሌላ ቦታ መስራት በሳዑዲ ህግ በጥብቅ የተከለከለ ነው።</li>
+                        <li><strong>የባንክ አካውንትና ደመወዝ፡</strong> ደመወዝዎ በየወሩ በህጋዊ የባንክ ካርድ (Musaned/STC Pay) ገቢ መደረጉን ማረጋገጥ ተገቢ ነው።</li>
+                    </ul>
+                </div>
+
+                <!-- Section 2: Safety & Emergency -->
+                <div class="bg-amber-50 border-l-4 border-amber-600 p-5 rounded-r-lg">
+                    <h3 class="font-bold text-amber-950 text-xl mb-3 flex items-center gap-2"><i class="fa-solid fa-shield-halved"></i> 2. የቤት ውስጥ ስራ ደህንነት (Domestic Work Safety)</h3>
+                    <ul class="list-disc list-inside text-slate-700 text-sm space-y-2 leading-relaxed">
+                        <li><strong>የጋዝ አጠቃቀም፡</strong> ምግብ ሰርተው ሲጨርሱ የጋዝ ሲሊንደሩን ዋና ቁልፍ መዝጋትዎን አይረሱ። የጋዝ ሽታ ከተሰማዎት ኤሌክትሪክ ወይም እሳት ሳይለኩሱ መስኮቶችን ይክፈቱ።</li>
+                        <li><strong>የኤሌክትሪክ እቃዎች፡</strong> የኤሌክትሪክ እቃዎችን በባዶ እግር ወይም በእርጥብ እጅ አለመንካት።</li>
+                        <li><strong>የጽዳት ኬሚካሎች፡</strong> ፍላሽ፣ ክሎራክስ እና ሌሎች ኬሚካሎችን ባንድ ላይ መደባለቅ አደገኛ መርዝ ጋዝ ስለሚፈጥር በፍጹም አይቀላቅሉ።</li>
+                    </ul>
+                </div>
+
+                <!-- Section 3: Emergency Contacts Table -->
+                <div class="border rounded-xl p-5 bg-slate-50">
+                    <h3 class="font-bold text-slate-800 text-lg mb-3 flex items-center gap-2"><i class="fa-solid fa-phone-volume text-red-600"></i> የሳዑዲ የድንገተኛ አደጋ ጥሪ ቁጥሮች (Emergency Numbers)</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center text-sm font-bold">
+                        <div class="bg-white p-3 rounded border shadow-sm">
+                            <span class="block text-slate-500 font-normal">ፖሊስ (Police)</span>
+                            <span class="text-xl text-blue-900">999</span>
+                        </div>
+                        <div class="bg-white p-3 rounded border shadow-sm">
+                            <span class="block text-slate-500 font-normal">አምቡላንስ (Ambulance)</span>
+                            <span class="text-xl text-red-600">997</span>
+                        </div>
+                        <div class="bg-white p-3 rounded border shadow-sm">
+                            <span class="block text-slate-500 font-normal">እሳት አደጋ (Civil Defense)</span>
+                            <span class="text-xl text-amber-600">998</span>
+                        </div>
+                        <div class="bg-white p-3 rounded border shadow-sm">
+                            <span class="block text-slate-500 font-normal">የኢትዮጵያ ኤምባሲ (Riyadh)</span>
+                            <span class="text-sm text-emerald-700">+966 11 482 1822</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ADMIN MODAL -->
+    <div id="admin-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full p-6 border border-slate-200">
+            <div class="flex justify-between items-center border-b pb-3 mb-4">
+                <h3 class="text-xl font-bold text-blue-900 flex items-center gap-2"><i class="fa-solid fa-user-shield"></i> የኮሌጅ አድሚን መቆጣጠሪያ</h3>
+                <button onclick="closeAdminModal()" class="text-slate-400 hover:text-slate-600 text-2xl font-bold">&times;</button>
+            </div>
+
+            <div id="admin-login-view">
+                <p class="text-sm text-slate-600 mb-4">ወደ አድሚን ክፍል ለመግባት ምስጢራዊ የይለፍ ቃልዎን ያስገቡ (Default: <strong>1234</strong>)</p>
+                <div class="mb-4">
+                    <input type="password" id="admin-password-input" placeholder="ይለፍ ቃል ያስገቡ" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-600 outline-none">
+                </div>
+                <button onclick="verifyAdminPassword()" class="w-full bg-blue-900 hover:bg-blue-800 text-white font-bold py-2.5 rounded-lg transition">ግለጽ / ግባ</button>
+            </div>
+
+            <div id="admin-dashboard-view" class="hidden">
+                <div class="flex space-x-4 border-b mb-4 pb-2">
+                    <button onclick="switchAdminSubTab('candidates')" class="font-bold text-blue-900 border-b-2 border-blue-900 pb-1">የተፈታኞች ዝርዝር</button>
+                    <button onclick="switchAdminSubTab('password')" class="font-bold text-slate-600 hover:text-blue-900 pb-1">🔑 ፓስወርድ ቀይር</button>
+                </div>
+
+                <div id="admin-sub-candidates">
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="text-sm font-semibold text-slate-600">በሲስተሙ የተመዘገቡ ተፈታኞች</span>
+                        <button onclick="clearAllData()" class="text-xs text-red-600 hover:underline">ዳታ አፅዳ (Reset Data)</button>
+                    </div>
+                    <div class="max-h-64 overflow-y-auto border rounded-lg">
+                        <table class="w-full text-sm text-left">
+                            <thead class="bg-slate-100 text-slate-700 uppercase text-xs sticky top-0">
+                                <tr>
+                                    <th class="px-3 py-2">ስም</th>
+                                    <th class="px-3 py-2">ውጤት</th>
+                                    <th class="px-3 py-2">ሁኔታ</th>
+                                    <th class="px-3 py-2 text-center">ተግባር</th>
+                                </tr>
+                            </thead>
+                            <tbody id="candidates-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="admin-sub-password" class="hidden space-y-3">
+                    <div>
+                        <label class="block text-xs font-semibold mb-1 text-slate-700">የቆየው ፓስወርድ</label>
+                        <input type="password" id="old-pass" class="w-full px-3 py-2 border rounded-lg text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold mb-1 text-slate-700">አዲስ ፓስወርድ</label>
+                        <input type="password" id="new-pass" class="w-full px-3 py-2 border rounded-lg text-sm">
+                    </div>
+                    <button onclick="changeAdminPassword()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-lg text-sm transition">ፓስወርድ ቀይር</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CERTIFICATE MODAL WITH ALWAYS VISIBLE ACTION BUTTONS -->
+    <div id="certificate-modal" class="fixed inset-0 bg-slate-900/90 z-50 hidden overflow-y-auto p-2 md:p-6 flex flex-col items-center">
+        
+        <!-- STICKY TOP ACTION BUTTONS BAR (ALWAYS VISIBLE) -->
+        <div class="no-print bg-slate-800 text-white p-3.5 rounded-xl shadow-2xl max-w-5xl w-full mb-4 flex flex-wrap justify-between items-center gap-3 sticky top-0 z-50 border border-slate-700">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-award text-amber-400 text-2xl"></i>
+                <div>
+                    <span class="font-bold text-sm md:text-base block leading-tight">ኦፊሴላዊ COC ሰርተፊኬት</span>
+                    <span class="text-[10px] text-slate-300">Standard A4 Landscape Size (Print & PDF Ready)</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <button onclick="downloadCertificatePDF()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-5 py-2.5 rounded-lg text-sm transition shadow flex items-center gap-2">
+                    <i class="fa-solid fa-file-pdf text-lg"></i> PDF አውርድ (Download)
+                </button>
+                <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-5 py-2.5 rounded-lg text-sm transition shadow flex items-center gap-2">
+                    <i class="fa-solid fa-print text-lg"></i> ፕሪንት (Print)
+                </button>
+                <button onclick="closeCertificateModal()" class="bg-slate-600 hover:bg-slate-500 text-white font-bold px-4 py-2.5 rounded-lg text-sm transition">
+                    &times; ዝጋ
+                </button>
+            </div>
+        </div>
+
+        <!-- CERTIFICATE CONTAINER (EXACT A4 LANDSCAPE) -->
+        <div class="w-full overflow-x-auto flex justify-center pb-8">
+            <div id="printable-area" class="cert-container-a4 cert-border p-8 shadow-2xl relative text-slate-900 flex flex-col justify-between">
+                
+                <div class="watermark">ETHIO-SAUDI OFFICIAL</div>
+
+                <!-- Header -->
+                <div class="text-center space-y-1 border-b-2 border-amber-500 pb-3 relative z-10">
+                    <p class="text-[11px] uppercase tracking-widest text-blue-900 font-bold">Federal Democratic Republic of Ethiopia & Kingdom of Saudi Arabia</p>
+                    <h2 class="cert-font-heading text-2xl font-bold text-blue-950">ETHIO-SAUDI OCCUPATIONAL & LANGUAGE ASSESSMENT COLLEGE</h2>
+                    <p class="text-[11px] text-amber-700 font-semibold">ACCREDITED COC COMPETENCY & ARABIC LANGUAGE EVALUATION CENTER</p>
+                </div>
+
+                <!-- Body Content -->
+                <div class="text-center space-y-4 my-auto relative z-10">
+                    <p class="text-sm italic font-serif text-slate-600">This is to officially certify that</p>
+                    <h3 id="cert-candidate-name" class="text-3xl font-bold text-blue-900 border-b-2 border-slate-400 inline-block px-10 pb-1">NAME HERE</h3>
+                    <p class="text-sm text-slate-700 max-w-2xl mx-auto leading-relaxed">
+                        has successfully passed the standard Occupational Competency Assessment (COC) and Basic Arabic Language Proficiency Exam for deployment to Saudi Arabia in the sector of:
+                    </p>
+                    <p id="cert-candidate-sector" class="text-base font-bold text-amber-900 bg-amber-50 inline-block px-6 py-1.5 rounded-lg border border-amber-300 shadow-sm">HOUSEKEEPING & CAREGIVING</p>
+                </div>
+
+                <!-- Meta Details -->
+                <div class="flex justify-center gap-8 my-2 text-sm relative z-10">
+                    <div class="text-center border px-4 py-1.5 rounded-lg bg-slate-50 shadow-sm">
+                        <span class="block text-[10px] text-slate-500 font-bold">EXAM SCORE</span>
+                        <span id="cert-score" class="font-bold text-emerald-700 text-base">85%</span>
+                    </div>
+                    <div class="text-center border px-4 py-1.5 rounded-lg bg-slate-50 shadow-sm">
+                        <span class="block text-[10px] text-slate-500 font-bold">CERTIFICATE ID</span>
+                        <span id="cert-id" class="font-bold text-blue-900 font-mono text-base">ESC-89421</span>
+                    </div>
+                    <div class="text-center border px-4 py-1.5 rounded-lg bg-slate-50 shadow-sm">
+                        <span class="block text-[10px] text-slate-500 font-bold">ISSUE DATE</span>
+                        <span id="cert-date" class="font-bold text-slate-800 text-base">2026-09-27</span>
+                    </div>
+                </div>
+
+                <!-- Footer (Barcode & Seal & QR Code) -->
+                <div class="flex justify-between items-end pt-3 border-t border-slate-200 relative z-10">
+                    <!-- Barcode Section -->
+                    <div class="text-center">
+                        <div class="bg-white p-1 rounded inline-block">
+                            <svg id="barcode-canvas" class="max-h-12 w-36"></svg>
+                        </div>
+                        <p class="text-[9px] text-slate-500 font-bold mt-0.5">Verification Barcode</p>
+                    </div>
+
+                    <!-- Seal Section -->
+                    <div class="w-16 h-16 bg-amber-500 rounded-full border-2 border-amber-300 shadow-lg flex flex-col items-center justify-center text-white text-center p-1 transform rotate-6">
+                        <i class="fa-solid fa-award text-xl text-amber-100"></i>
+                        <span class="text-[7px] font-bold tracking-tighter uppercase">Official Seal</span>
+                    </div>
+
+                    <!-- QR Code Section -->
+                    <div class="text-center">
+                        <div id="qrcode-canvas" class="p-1 border rounded bg-white inline-block shadow-sm"></div>
+                        <p class="text-[9px] text-slate-500 font-bold mt-0.5">Scan Authenticity</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-slate-400 text-xs py-4 text-center mt-auto border-t border-slate-800">
+        <p>© 2026 Ethio-Saudi Occupational & Language Assessment College. All Rights Reserved.</p>
+    </footer>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        const questionBank = [
+            { q: "1. አሰሪዎ 'ጽዳት አድርጊ' ሲሉዎት በዓረብኛ ምን ይባላል?", options: ["ነዚፊ (Nadhifi)", "አክሊ (Akli)", "ኖም (Nom)", "ሱቅ (Suq)"], correct: 0 },
+            { q: "2. በቤት ውስጥ አደገኛ የጽዳት ኬሚካሎችን ሲጠቀሙ ቀዳሚው ጥንቃቄ ምንድነው?", options: ["ጓንትና ማስክ ማድረግ", "ከምግብ ጋር መቀላቀል", "በእጅ ብቻ መያዝ", "የመስኮት በር መዝጋት"], correct: 0 },
+            { q: "3. 'ማይ (Mai)' የሚለው የዓረብኛ ቃል ትርጉም ምንድነው?", options: ["ውሃ", "ወተት", "ሻይ", "ቡና"], correct: 0 },
+            { q: "4. የሕፃናት ወተት ሲዘጋጅ መደረግ ያለበት ዋና ጥንቃቄ ምንድነው?", options: ["የጠርሙሱን ንጽህናና የሙቀት መጠን ማረጋገጥ", "ቀዝቃዛ ውሃ መጠቀም", "ያልፈላ ውሃ ማድረግ", "ስኳር መጨመር"], correct: 0 },
+            { q: "5. 'ሹክራን (Shukran)' የሚለው ቃል ትርጉም ምንድነው?", options: ["አመሰግናለሁ", "ይቅርታ", "ደህና ሁን", "እንኳን ደስ አለዎት"], correct: 0 },
+            { q: "6. በሳዑዲ ዓረብያ የድንገተኛ አደጋ ጥሪ ቁጥር ስንት ነው?", options: ["999", "111", "123", "000"], correct: 0 },
+            { q: "7. 'አይዋ (Awa)' ማለት በዓረብኛ ምን ማለት ነው?", options: ["አዎ", "አይደለም", "አላውቅም", "በኋላ"], correct: 0 },
+            { q: "8. አልባሳትን በብረታ ብረት (ካውያ) ሲተኮሱ የመጀመሪያው ህግ ምንድነው?", options: ["የጨርቁን ዓይነትና የሙቀት መጠን መመልከት", "ከፍተኛ ሙቀት መጠቀም", "ውሃ ሳይረጩ መተኮስ", "የተቃጠለ ካውያ መጠቀም"], correct: 0 },
+            { q: "9. 'ላ (La)' ማለት በዓረብኛ ምን ማለት ነው?", options: ["አይደለም / አይ", "አዎ", "እሺ", "ና"], correct: 0 },
+            { q: "10. አረጋውያንን በሚንከባከቡበት ወቅት ዋናው መርህ ምንድነው?", options: ["ትዕግስትና አክብሮት ማሳየት", "በከፍተኛ ድምፅ መጮህ", "ብቻቸውን መተው", "ምግብ አለመስጠት"], correct: 0 }
+        ];
+
+        const vocabList = [
+            { ar: "ماء (Mai)", am: "ውሃ", pron: "ማይ" },
+            { ar: "أكل (Akl)", am: "ምግብ", pron: "አክል" },
+            { ar: "غرفة (Ghurfa)", am: "ክፍል", pron: "ጉርፋ" },
+            { ar: "حمام (Hammam)", am: "መታጠቢያ ቤት", pron: "ሀማም" },
+            { ar: "مطبخ (Matbakh)", am: "ወጥ ቤት", pron: "ማጥባክ" },
+            { ar: "نظيف (Nadhif)", am: "ጽዳት", pron: "ነዚፍ" },
+            { ar: "شكرا (Shukran)", am: "አመሰግናለሁ", pron: "ሹክራን" },
+            { ar: "تعال (Taal)", am: "ና / ነይ", pron: "ታኣል" }
+        ];
+
+        let currentQuestionIndex = 0;
+        let userAnswers = new Array(questionBank.length).fill(null);
+        let timerInterval = null;
+        let timeRemaining = 30 * 60;
+        let currentStudent = null;
+        let candidatesList = JSON.parse(localStorage.getItem('candidatesList') || '[]');
+        let adminPassword = localStorage.getItem('adminPassword') || '1234';
+
+        window.onload = function() {
+            renderVocab();
+            disableCheatingSafeguards();
+        };
+
+        function disableCheatingSafeguards() {
+            document.addEventListener('contextmenu', event => event.preventDefault());
+            document.addEventListener('keydown', function(e) {
+                if (e.ctrlKey && (e.key === 'c' || e.key === 'v' || e.key === 'u')) {
+                    e.preventDefault();
+                }
+            });
+        }
+
+        function switchTab(tab) {
+            document.getElementById('tab-exam').classList.add('hidden');
+            document.getElementById('tab-arabic').classList.add('hidden');
+            document.getElementById('tab-guide').classList.add('hidden');
+
+            document.getElementById('tab-' + tab).classList.remove('hidden');
+        }
+
+        function startExam(e) {
+            e.preventDefault();
+            const name = document.getElementById('student-name').value;
+            const phone = document.getElementById('student-phone').value;
+            const sector = document.getElementById('student-sector').value;
+
+            currentStudent = { name, phone, sector, score: 0, status: 'Pending', date: new Date().toISOString().split('T')[0], id: 'ESC-' + Math.floor(10000 + Math.random() * 90000) };
+
+            document.getElementById('registration-card').classList.add('hidden');
+            document.getElementById('exam-panel').classList.remove('hidden');
+            document.getElementById('exam-user-display').innerText = `ተፈታኝ፡ ${name}`;
+
+            currentQuestionIndex = 0;
+            userAnswers.fill(null);
+            renderQuestion();
+            startTimer();
+        }
+
+        function renderQuestion() {
+            const q = questionBank[currentQuestionIndex];
+            document.getElementById('question-text').innerText = q.q;
+            document.getElementById('question-tracker').innerText = `ጥያቄ ${currentQuestionIndex + 1} ከ ${questionBank.length}`;
+            
+            const progressPercent = ((currentQuestionIndex + 1) / questionBank.length) * 100;
+            document.getElementById('progress-bar-fill').style.width = `${progressPercent}%`;
+
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+
+            q.options.forEach((opt, idx) => {
+                const isSelected = userAnswers[currentQuestionIndex] === idx;
+                const optBtn = document.createElement('button');
+                optBtn.type = 'button';
+                optBtn.className = `w-full text-left p-3.5 rounded-lg border transition font-medium flex items-center justify-between ${
+                    isSelected ? 'bg-blue-100 border-blue-600 text-blue-900 font-bold' : 'bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-700'
+                }`;
+                optBtn.innerHTML = `<span>${opt}</span> ${isSelected ? '<i class="fa-solid fa-circle-check text-blue-600"></i>' : '<i class="fa-regular fa-circle text-slate-400"></i>'}`;
+                optBtn.onclick = () => selectOption(idx);
+                optionsContainer.appendChild(optBtn);
+            });
+
+            document.getElementById('prev-btn').disabled = currentQuestionIndex === 0;
+            if (currentQuestionIndex === questionBank.length - 1) {
+                document.getElementById('next-btn').classList.add('hidden');
+                document.getElementById('submit-btn').classList.remove('hidden');
+            } else {
+                document.getElementById('next-btn').classList.remove('hidden');
+                document.getElementById('submit-btn').classList.add('hidden');
+            }
+        }
+
+        function selectOption(index) {
+            userAnswers[currentQuestionIndex] = index;
+            renderQuestion();
+        }
+
+        function navigateQuestion(direction) {
+            currentQuestionIndex += direction;
+            renderQuestion();
+        }
+
+        function startTimer() {
+            timeRemaining = 30 * 60;
+            updateTimerDisplay();
+            timerInterval = setInterval(() => {
+                timeRemaining--;
+                updateTimerDisplay();
+                if (timeRemaining <= 0) {
+                    clearInterval(timerInterval);
+                    alert("30 ደቂቃው አልቋል! ፈተናው በራሱ ጊዜ ይዘጋል።");
+                    finishExam();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeRemaining / 60);
+            const seconds = timeRemaining % 60;
+            document.getElementById('timer-display').innerText = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function submitExamPrompt() {
+            if (confirm("ፈተናውን ለማጠናቀቅ እርግጠኛ ነዎት?")) {
+                finishExam();
+            }
+        }
+
+        function finishExam() {
+            clearInterval(timerInterval);
+
+            let scoreCount = 0;
+            questionBank.forEach((q, idx) => {
+                if (userAnswers[idx] === q.correct) {
+                    scoreCount++;
+                }
+            });
+
+            const scorePercent = Math.round((scoreCount / questionBank.length) * 100);
+            const status = scorePercent >= 70 ? 'Passed' : 'Failed';
+
+            currentStudent.score = scorePercent;
+            currentStudent.status = status;
+
+            candidatesList.push(currentStudent);
+            localStorage.setItem('candidatesList', JSON.stringify(candidatesList));
+
+            document.getElementById('exam-panel').classList.add('hidden');
+            document.getElementById('completion-card').classList.remove('hidden');
+            document.getElementById('comp-name').innerText = currentStudent.name;
+            document.getElementById('comp-score').innerText = `${scorePercent}%`;
+            document.getElementById('comp-status').innerText = status === 'Passed' ? 'Passed (አልፈዋል)' : 'Failed (አላለፉም)';
+            document.getElementById('comp-status').className = status === 'Passed' ? 'font-bold text-emerald-600' : 'font-bold text-red-600';
+        }
+
+        function resetExamToHome() {
+            document.getElementById('completion-card').classList.add('hidden');
+            document.getElementById('registration-card').classList.remove('hidden');
+            document.getElementById('student-form').reset();
+        }
+
+        function renderVocab() {
+            const container = document.getElementById('vocab-cards-container');
+            container.innerHTML = '';
+            vocabList.forEach(v => {
+                const card = document.createElement('div');
+                card.className = "bg-slate-50 p-4 rounded-lg border border-slate-200 flex justify-between items-center";
+                card.innerHTML = `
+                    <div>
+                        <h4 class="arabic-font text-xl font-bold text-blue-900">${v.ar}</h4>
+                        <p class="text-xs text-slate-500">ትርጉም፡ ${v.am} (${v.pron})</p>
+                    </div>
+                    <button onclick="speakText('${v.pron}')" class="bg-blue-100 hover:bg-blue-200 text-blue-900 p-2.5 rounded-full transition">
+                        <i class="fa-solid fa-volume-high"></i>
+                    </button>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function speakText(text) {
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'ar-SA';
+                window.speechSynthesis.speak(utterance);
+            } else {
+                alert("የድምፅ ሲስተም በስልክዎ/ብራውዘርዎ ላይ አይሰራም።");
+            }
+        }
+
+        function openAdminModal() {
+            document.getElementById('admin-modal').classList.remove('hidden');
+            document.getElementById('admin-login-view').classList.remove('hidden');
+            document.getElementById('admin-dashboard-view').classList.add('hidden');
+        }
+
+        function closeAdminModal() {
+            document.getElementById('admin-modal').classList.add('hidden');
+        }
+
+        function verifyAdminPassword() {
+            const inputPass = document.getElementById('admin-password-input').value;
+            if (inputPass === adminPassword) {
+                document.getElementById('admin-login-view').classList.add('hidden');
+                document.getElementById('admin-dashboard-view').classList.remove('hidden');
+                renderCandidatesTable();
+            } else {
+                alert("ተሳስቷል! ትክክለኛውን ፓስወርድ ያስገቡ።");
+            }
+        }
+
+        function renderCandidatesTable() {
+            const tbody = document.getElementById('candidates-table-body');
+            tbody.innerHTML = '';
+
+            if (candidatesList.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-slate-400">ምንም ተፈታኝ አልተመዘገበም።</td></tr>';
+                return;
+            }
+
+            candidatesList.forEach((c, index) => {
+                const tr = document.createElement('tr');
+                tr.className = "border-b hover:bg-slate-50";
+                tr.innerHTML = `
+                    <td class="px-3 py-2 font-medium">${c.name}</td>
+                    <td class="px-3 py-2 font-bold">${c.score}%</td>
+                    <td class="px-3 py-2 font-bold ${c.status === 'Passed' ? 'text-emerald-600' : 'text-red-600'}">${c.status}</td>
+                    <td class="px-3 py-2 text-center">
+                        ${c.status === 'Passed' ? `<button onclick="generateCertificate(${index})" class="bg-amber-500 hover:bg-amber-600 text-blue-950 font-bold px-2 py-1 rounded text-xs">📄 ሰርተፊኬት አዘጋጅ</button>` : '<span class="text-xs text-slate-400">አላለፈም</span>'}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function switchAdminSubTab(sub) {
+            if (sub === 'candidates') {
+                document.getElementById('admin-sub-candidates').classList.remove('hidden');
+                document.getElementById('admin-sub-password').classList.add('hidden');
+            } else {
+                document.getElementById('admin-sub-candidates').classList.add('hidden');
+                document.getElementById('admin-sub-password').classList.remove('hidden');
+            }
+        }
+
+        function changeAdminPassword() {
+            const oldP = document.getElementById('old-pass').value;
+            const newP = document.getElementById('new-pass').value;
+
+            if (oldP !== adminPassword) {
+                alert("የቆየው ፓስወርድ አልተዛመደም!");
+                return;
+            }
+            if (!newP) {
+                alert("እባክዎን አዲስ ፓስወርድ ያስገቡ");
+                return;
+            }
+
+            adminPassword = newP;
+            localStorage.setItem('adminPassword', adminPassword);
+            alert("ፓስወርድዎ በተሳካ ሁኔታ ተቀይሯል!");
+            document.getElementById('old-pass').value = '';
+            document.getElementById('new-pass').value = '';
+        }
+
+        function clearAllData() {
+            if (confirm("ሁሉንም የተፈታኞች መረጃ ማጽዳት ይፈልጋሉ?")) {
+                candidatesList = [];
+                localStorage.removeItem('candidatesList');
+                renderCandidatesTable();
+            }
+        }
+
+        function generateCertificate(index) {
+            const candidate = candidatesList[index];
+            closeAdminModal();
+
+            document.getElementById('cert-candidate-name').innerText = candidate.name.toUpperCase();
+            document.getElementById('cert-candidate-sector').innerText = candidate.sector.toUpperCase();
+            document.getElementById('cert-score').innerText = `${candidate.score}%`;
+            document.getElementById('cert-id').innerText = candidate.id;
+            document.getElementById('cert-date').innerText = candidate.date;
+
+            // Generate Barcode SVG
+            JsBarcode("#barcode-canvas", candidate.id, {
+                format: "CODE128",
+                width: 2,
+                height: 40,
+                displayValue: true,
+                fontSize: 10
+            });
+
+            // Generate QR Code
+            const qrContainer = document.getElementById("qrcode-canvas");
+            qrContainer.innerHTML = "";
+            new QRCode(qrContainer, {
+                text: `OFFICIAL CERTIFICATE\nID: ${candidate.id}\nName: ${candidate.name}\nResult: PASSED (${candidate.score}%)\nCollege: Ethio-Saudi College`,
+                width: 60,
+                height: 60
+            });
+
+            document.getElementById('certificate-modal').classList.remove('hidden');
+        }
+
+        function closeCertificateModal() {
+            document.getElementById('certificate-modal').classList.add('hidden');
+        }
+
+        // PERFECT A4 LANDSCAPE PDF EXPORT
+        function downloadCertificatePDF() {
+            const element = document.getElementById('printable-area');
+            const certId = document.getElementById('cert-id').innerText;
+
+            const opt = {
+                margin:       0,
+                filename:     `COC_Certificate_${certId}.pdf`,
+                image:        { type: 'jpeg', quality: 1.0 },
+                html2canvas:  { scale: 2, useCORS: true, logging: false },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' }
+            };
+
+            html2pdf().set(opt).from(element).save();
+        }
+    </script>
+</body>
+</html>
